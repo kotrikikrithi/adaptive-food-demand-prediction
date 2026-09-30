@@ -44,3 +44,10 @@ Every attempt after the first **requires** `--note "what changed and why"`.
 | `src/adaptive.py` | drift detection, bias correction, fine-tuning, fair intervals |
 | `src/metrics.py` | WAPE, calibration, coverage, waste/shortage, fitness |
 | `docs/EXPLANATION.md` | written explanation for the jury |
+
+## Website
+```
+venv\Scripts\activate
+streamlit run app.py
+```
+Opens http://localhost:8501 with three pages: **Data** (see and download the data), **Run model** (start an attempt and watch the live log), and **Results** (scores, charts, meal predictions). Press `Ctrl + C` in the terminal to stop it.
