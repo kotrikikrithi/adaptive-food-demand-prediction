@@ -55,3 +55,10 @@ A model trained offline cannot anticipate unseen drift, so it must adapt while r
 
 ## 8. Attempt log
 Every run appends to `results/attempts.csv`, together with its mandatory "what changed and why" note.
+
+## 9. 6-month forecast (`src/forecast.py`)
+- **Direct forecasting**: each future day is predicted from its own known conditions (calendar, typical weather for the date, planned events, outlet type with per-type interaction features). Nothing is fed back recursively. We tried a recursive version first, and its errors piled up into a false downward trend.
+- **Regime detection**: a Page-Hinkley scan of a first-year model's errors finds when behaviour changed (detected 9 Aug 2025; true change 7 Aug). A `regime` flag and its per-type interactions keep the "new behaviour" separate from seasonal effects. Without it, cafeterias wrongly dropped in May–June, because the only May–June examples were from the old regime.
+- **Recency weighting**: sample weight halves every 120 days.
+- **Backtest** (forecast made on 30 Jun 2025 for Jul–Dec 2025), WAPE: seasonal-naive 38.7%, one-shot 20.2%, **updated monthly 10.1%**. We therefore recommend re-forecasting monthly.
+- **Safe range**: the 90% quantile of the relative backtest errors, computed per outlet type.

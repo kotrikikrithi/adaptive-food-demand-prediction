@@ -45,9 +45,18 @@ Every attempt after the first **requires** `--note "what changed and why"`.
 | `src/metrics.py` | WAPE, calibration, coverage, waste/shortage, fitness |
 | `docs/EXPLANATION.md` | written explanation for the jury |
 
+## 6-month forecast
+```
+python -m src.forecast
+```
+Learns from all 2 years and forecasts every outlet, every day, until `FORECAST_END` (30 Jun 2026).
+It also backtests itself: it pretends it is 30 Jun 2025, forecasts Jul-Dec 2025, and compares
+with what really happened. Results go to `results/forecast/`.
+
 ## Website
 ```
-venv\Scripts\activate
+venv\Scriptsctivate
 streamlit run app.py
 ```
-Opens http://localhost:8501 with three pages: **Data** (see and download the data), **Run model** (start an attempt and watch the live log), and **Results** (scores, charts, meal predictions). Press `Ctrl + C` in the terminal to stop it.
+Opens http://localhost:8501: one page with **1. The data**, **2. The model** and **3. The result**
+(the 6-month forecast, meals per month, and the backtest accuracy). Press `Ctrl + C` in the terminal to stop it.

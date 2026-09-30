@@ -1,230 +1,189 @@
 """
-Web interface for the project.
+Website: one simple page in three parts.
+  1. The data   - what we used
+  2. The model  - how it works
+  3. The result - meals forecast for the next 6 months, and how accurate it is
 
-Start it with:   streamlit run app.py
-It opens in the browser at http://localhost:8501
-
-Pages:
-  1. Data      - see and download the synthetic data, try different drift scenarios
-  2. Run model - start a new attempt and watch the live log
-  3. Results   - scores, charts and meal predictions for every attempt
+Start it with:   streamlit run app.py      (opens http://localhost:8501)
 """
 import json
 import os
-import subprocess
-import sys
 
 import altair as alt
 import pandas as pd
 import streamlit as st
 
 import config
-from src.data_generator import generate
+from src import forecast as F
 
-ATTEMPTS_CSV = "results/attempts.csv"
+FC_DIR = F.OUT_DIR
+COLORS = alt.Scale(domain=["actual", "forecast"], range=["#333333", "#e4572e"])
 
-st.set_page_config(page_title="Adaptive Food Demand", page_icon="🍱", layout="wide")
+st.set_page_config(page_title="Food Demand Forecast", page_icon="🍱", layout="centered")
+st.markdown("<style>.block-container{max-width:900px} h2{margin-top:2.2rem}</style>", unsafe_allow_html=True)
 
 
 @st.cache_data
-def load_data(scenario, strength):
-    return generate(scenario, drift_start_day=config.VAL_END, strength=strength)
+def history():
+    return F.load_history()
 
 
-def load_attempts():
-    return pd.read_csv(ATTEMPTS_CSV) if os.path.exists(ATTEMPTS_CSV) else pd.DataFrame()
+def load_forecast():
+    if not os.path.exists(f"{FC_DIR}/summary.json"):
+        return None
+    with open(f"{FC_DIR}/summary.json") as f:
+        s = json.load(f)
+    fc = pd.read_csv(f"{FC_DIR}/forecast.csv", parse_dates=["date"])
+    bt = pd.read_csv(f"{FC_DIR}/backtest.csv", parse_dates=["date"])
+    return s, fc, bt
 
 
-def split_name(day):
-    if day < config.TRAIN_END:
-        return "1 train"
-    return "2 validation" if day < config.VAL_END else "3 test (drift)"
+hist = history()
+res = load_forecast()
 
-
-# ---------------------------------------------------------------------------
-st.sidebar.title("🍱 Adaptive Food Demand")
-page = st.sidebar.radio("Go to", ["1. Data", "2. Run model", "3. Results"])
-st.sidebar.caption("Predicts daily meals for restaurants, cafeterias and hostels, "
-                   "and adapts when customer behaviour changes.")
-
-# ===========================================================================
-if page == "1. Data":
-    st.title("1. The data used")
-    st.write("Synthetic daily meal counts for 6 outlets over 2 years. Demand depends on weekends, "
-             "holidays, weather, special events and semester breaks. From the red line onward, "
-             "a **drift** changes customer behaviour. This is the period the model is tested on.")
-    c1, c2 = st.columns(2)
-    scenario = c1.selectbox("Drift scenario", config.DRIFT_SCENARIOS,
-                            index=config.DRIFT_SCENARIOS.index(config.TEST_SCENARIO))
-    strength = c2.slider("Drift strength", 0.0, 1.0, float(config.TEST_STRENGTH), 0.1)
-    df = load_data(scenario, strength)
-    df["split"] = df.day_index.map(split_name)
-
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Rows", f"{len(df):,}")
-    m2.metric("Outlets", df.outlet.nunique())
-    m3.metric("Days", df.day_index.nunique())
-    m4.metric("Drift starts on", str(df.date[df.day_index == config.VAL_END].iloc[0].date()))
-
-    group = st.radio("Outlet type", config.GROUPS, horizontal=True)
-    d = df[df.group == group]
-    line = alt.Chart(d).mark_line(strokeWidth=1).encode(
-        x=alt.X("date:T", title="date"), y=alt.Y("demand:Q", title="meals"),
-        color="outlet:N", tooltip=["date:T", "outlet", "demand", "weekend", "holiday", "rain", "event"])
-    rule = alt.Chart(pd.DataFrame({"date": [df.date[df.day_index == config.VAL_END].iloc[0]]})) \
-        .mark_rule(color="red", strokeDash=[5, 3]).encode(x="date:T")
-    st.altair_chart((line + rule).properties(height=350).interactive(), width="stretch")
-
-    st.subheader("Average meals: weekday vs weekend, before and after drift")
-    d2 = df.assign(period=(df.day_index >= config.VAL_END).map({False: "before drift", True: "after drift"}),
-                   day=df.weekend.map({0: "weekday", 1: "weekend"}))
-    st.dataframe(d2.pivot_table(index="group", columns=["period", "day"], values="demand", aggfunc="mean")
-                 .round(0), width="stretch")
-
-    st.subheader("Raw data")
-    st.caption("train = model learns · validation = used to choose the best settings · "
-               "test = drifted period for the final score")
-    st.dataframe(df, width="stretch", height=300)
-    st.download_button("Download CSV", df.to_csv(index=False), f"food_demand_{scenario}.csv", "text/csv")
+st.title("🍱 Food Demand Forecast")
+st.write("How many meals should each kitchen prepare over the next 6 months? We learn from 2 years of "
+         "data and adapt when customer behaviour changes.")
 
 # ===========================================================================
-elif page == "2. Run model":
-    st.title("2. Run the model")
-    attempts = load_attempts()
-    n_next = len(attempts) + 1
-    st.write(f"This will be **Attempt {n_next}**. The run generates data, evolves network settings "
-             "(NSGA-II), trains the best network, then tests it on the drifted period with and without "
-             "adaptation.")
-    c1, c2 = st.columns(2)
-    drift = c1.selectbox("Drift scenario for the test", config.DRIFT_SCENARIOS,
-                         index=config.DRIFT_SCENARIOS.index(config.TEST_SCENARIO))
-    quick = c2.checkbox("Quick mode (about 2 min instead of about 8 min)", value=True)
-    note = st.text_input("What changed and why? (required after Attempt 1)",
-                         placeholder="e.g. tested level_shift drift to check adaptation")
-    st.caption(f"Search settings from config.py: population {config.POP_SIZE}, "
-               f"generations {config.N_GENERATIONS}, parameter budget {config.PARAM_BUDGET}.")
+st.header("1. The data")
+st.write(f"Daily meal counts for **6 food outlets** from **{hist.date.min():%d %b %Y}** to "
+         f"**{hist.date.max():%d %b %Y}** ({hist.day_index.nunique()} days, {len(hist):,} rows). "
+         "The data is synthetic: generated with realistic rules, as the hackathon benchmark asks.")
 
-    if st.button("▶ Run attempt", type="primary"):
-        if n_next > 1 and not note.strip():
-            st.error("Please write a note: what changed and why.")
-        else:
-            cmd = [sys.executable, "-u", "run_attempt.py", "--drift", drift, "--note", note]
-            if quick:
-                cmd.append("--quick")
-            status = st.status(f"Running Attempt {n_next}...", expanded=True)
-            box = status.empty()
-            lines = []
-            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-                                    encoding="utf-8", errors="replace")
-            for line in proc.stdout:
-                if "Warning" in line or "warnings.warn" in line:
-                    continue
-                lines.append(line.rstrip())
-                box.code("\n".join(lines[-40:]))
-            proc.wait()
-            os.makedirs("results", exist_ok=True)
-            with open(f"results/attempt{n_next}_console.log", "w", encoding="utf-8") as f:
-                f.write("\n".join(lines))
-            if proc.returncode == 0:
-                status.update(label=f"Attempt {n_next} finished ✅", state="complete")
-                final = [l for l in lines if "FINAL FITNESS" in l]
-                st.success((final[-1] if final else "Done") + ". Open the **3. Results** page.")
-            else:
-                status.update(label="Run failed ❌", state="error")
+c = st.columns(3)
+for col, g in zip(c, config.GROUPS):
+    outlets = [o for o, t, _ in config.OUTLETS if t == g]
+    col.metric(g.capitalize() + "s", f"{hist[hist.group == g].demand.mean():.0f} meals/day",
+               ", ".join(outlets), delta_color="off")
+
+st.write("**What changes demand**")
+st.table(pd.DataFrame({
+    "Condition": ["Weekend", "Holiday", "Rain", "Hot day", "Special event", "Semester break (May–Jun)"],
+    "Restaurant": ["more", "more", "less", "slightly less", "much more", "no change"],
+    "Cafeteria": ["much less", "much less", "slightly more", "slightly less", "more", "no change"],
+    "Hostel": ["slightly less", "less", "slightly more", "slightly less", "slightly more", "about half"],
+}).set_index("Condition"))
+
+st.write("**⚠ Customer behaviour changed in August 2025** (red line): cafeterias started getting busy at "
+         "weekends and restaurants lost their weekend rush. A good model must notice this.")
+group = st.radio("Show", config.GROUPS, horizontal=True, format_func=str.capitalize, key="g1")
+d = hist[hist.group == group]
+change_date = hist.date[hist.day_index == config.VAL_END].iloc[0]
+chart = alt.Chart(d).mark_line(strokeWidth=0.8).encode(
+    x=alt.X("date:T", title=None), y=alt.Y("demand:Q", title="meals per day"), color=alt.Color("outlet:N", title=None),
+    tooltip=["date:T", "outlet", "demand", "weekend", "holiday", "rain", "event"])
+rule = alt.Chart(pd.DataFrame({"date": [change_date]})).mark_rule(color="red", strokeDash=[5, 3]).encode(x="date:T")
+st.altair_chart((chart + rule).properties(height=280), width="stretch")
+with st.expander("See the raw data"):
+    st.dataframe(hist.drop(columns=["day_index"]), height=260, width="stretch", hide_index=True)
+    st.download_button("Download data (CSV)", hist.to_csv(index=False), "food_demand_2years.csv", "text/csv")
 
 # ===========================================================================
-else:
-    st.title("3. Results")
-    attempts = load_attempts()
-    if attempts.empty:
-        st.info("No attempts yet. Go to **2. Run model**.")
-        st.stop()
+st.header("2. The model")
+st.graphviz_chart("""
+digraph {
+  rankdir=LR; node [shape=box, style="rounded,filled", fillcolor="#f3f4f6", color="#9ca3af", fontname="Helvetica", fontsize=11];
+  edge [color="#6b7280"];
+  data [label="2 years of\\nmeal data"];
+  detect [label="Drift detector\\nfinds when behaviour\\nchanged", fillcolor="#fde2d8"];
+  evo [label="Evolution (NSGA-II)\\npicks network settings", fillcolor="#e0ecff"];
+  nn [label="Small neural\\nnetwork", fillcolor="#e0ecff"];
+  future [label="Future conditions\\ncalendar, typical weather,\\nplanned events"];
+  out [label="Meals per day\\nfor 6 months\\n+ safe range", fillcolor="#dcfce7"];
+  data -> detect -> nn; evo -> nn; future -> nn -> out;
+}""")
+st.markdown("""
+1. **What it looks at**: day of week, weekend, holiday, semester break, typical weather for that date,
+   planned events, and the outlet type (each type gets its own signals).
+2. **Drift detector (Page-Hinkley test)**: scans the history for a lasting change in the model's errors,
+   and marks the days after it as *"new behaviour"*. The model then learns the new pattern without
+   forgetting seasonal effects such as the semester break.
+3. **Recent days count more**: a day 120 days old counts half as much as yesterday.
+4. **Evolution chose the network**: a genetic algorithm (NSGA-II) tried many designs and kept the best
+   balance of accuracy, stability, size and fairness across outlet types.
+5. **Direct forecast**: each future day is predicted from its own conditions, so errors don't pile up over 6 months.
+6. **Safe range**: from past forecast errors, a range that should contain the real value 90% of the time.
+""")
+if res:
+    s = res[0]
+    hp = s["settings"]
+    c = st.columns(4)
+    c[0].metric("Network", f"{hp['n_layers']} layer × {hp['width']}")
+    c[1].metric("Parameters", s["n_params"], f"budget {config.PARAM_BUDGET}", delta_color="off")
+    c[2].metric("Activation", hp["activation"])
+    c[3].metric("Change detected", pd.Timestamp(s["change_detected_on"]).strftime("%d %b %Y")
+                if s["change_detected_on"] else "none")
 
-    st.subheader("All attempts (lower fitness is better)")
-    show = ["attempt", "timestamp", "test_drift", "note", "quick", "n_params", "latency_ms",
-            "test_wape_static", "test_wape_adaptive", "final_fitness", "runtime_s"]
-    st.dataframe(attempts[[c for c in show if c in attempts]], width="stretch", hide_index=True)
-    if len(attempts) > 1:
-        st.line_chart(attempts.set_index("attempt")[["final_fitness"]], height=180)
+# ===========================================================================
+st.header("3. The result")
+if res is None:
+    st.info("No forecast yet.")
+    if st.button("▶ Build the 6-month forecast (about 2 minutes)", type="primary"):
+        with st.spinner("Learning from 2 years of data and forecasting..."):
+            F.run(log=lambda *_: None)
+        st.rerun()
+    st.stop()
 
-    n = st.selectbox("Look at attempt", attempts.attempt.tolist()[::-1])
-    folder = f"results/attempt_{int(n):02d}"
-    with open(f"{folder}/summary.json") as f:
-        S = json.load(f)
-    rec, st_, ad = S["record"], S["summary"]["static"], S["summary"]["adaptive"]
+s, fc, bt = res
+fc = fc[fc.date >= pd.Timestamp(s["forecast_start"]).replace(day=1) + pd.offsets.MonthBegin(1)] \
+    if pd.Timestamp(s["forecast_start"]).day != 1 else fc     # show whole months only
+start, end = fc.date.min(), fc.date.max()
+st.write(f"Forecast for **{start:%d %b %Y} – {end:%d %b %Y}**.")
 
-    k = st.columns(5)
-    k[0].metric("Final fitness", f"{rec['final_fitness']:.4f}")
-    k[1].metric("Error: normal model", f"{st_['wape']:.1%}")
-    k[2].metric("Error: adaptive model", f"{ad['wape']:.1%}", f"{ad['wape'] - st_['wape']:+.1%}",
-                delta_color="inverse")
-    k[3].metric("Parameters", f"{rec['n_params']}", f"budget {config.PARAM_BUDGET}", delta_color="off")
-    k[4].metric("Latency", f"{rec['latency_ms']:.3f} ms", f"budget {config.LATENCY_BUDGET_MS} ms",
-                delta_color="off")
-    st.caption(f"Drift: **{rec['test_drift']}** · Note: {rec['note'] or '-'} · Settings: `{rec['settings']}`")
+st.subheader("Meals to prepare per month")
+monthly = fc.assign(month=fc.date.dt.strftime("%b %Y")).pivot_table(
+    index="outlet", columns="month", values="pred", aggfunc="sum", sort=False)
+monthly["Total"] = monthly.sum(axis=1)
+monthly.loc["All outlets"] = monthly.sum()
+st.dataframe(monthly.style.format("{:,.0f}"), width="stretch")
 
-    tab1, tab2, tab3, tab4 = st.tabs(["Predictions", "Fairness & waste", "Convergence", "Explainability"])
+st.subheader("Daily forecast")
+outlet = st.selectbox("Outlet", [o for o, _, _ in config.OUTLETS])
+recent = hist[(hist.outlet == outlet) & (hist.date >= start - pd.Timedelta(days=90))]
+f_o = fc[fc.outlet == outlet]
+lines = pd.concat([recent[["date", "demand"]].assign(series="actual"),
+                   f_o[["date", "pred"]].rename(columns={"pred": "demand"}).assign(series="forecast")])
+band = alt.Chart(f_o).mark_area(opacity=0.18, color="#e4572e").encode(
+    x="date:T", y=alt.Y("low:Q", title="meals per day"), y2="high:Q")
+line = alt.Chart(lines).mark_line(strokeWidth=1).encode(
+    x=alt.X("date:T", title=None), y="demand:Q", color=alt.Color("series:N", scale=COLORS, title=None),
+    tooltip=["date:T", "series", "demand"])
+st.altair_chart((band + line).properties(height=300).interactive(bind_y=False), width="stretch")
+st.caption("Shaded = 90% safe range. The drop in May–June for hostels is the semester break.")
+with st.expander("Daily numbers"):
+    show = f_o.drop(columns=["outlet", "group"]).rename(columns={
+        "pred": "meals", "low": "safe low", "high": "safe high", "rain_chance": "rain chance"})
+    st.dataframe(show, hide_index=True, width="stretch", height=260)
+    st.download_button("Download forecast (CSV)", fc.to_csv(index=False), "forecast_6_months.csv", "text/csv")
 
-    with tab1:
-        pred = pd.read_csv(f"{folder}/test_predictions.csv", parse_dates=["date"])
-        for c in ["y", "pred_static", "pred_adaptive", "lo_adaptive", "hi_adaptive"]:
-            pred[c + "_meals"] = (pred[c] * pred.scale).round()
-        outlet = st.selectbox("Outlet", sorted(pred.outlet.unique()))
-        p = pred[pred.outlet == outlet]
-        long = p.melt("date", ["y_meals", "pred_static_meals", "pred_adaptive_meals"], "series", "meals")
-        long.series = long.series.map({"y_meals": "actual", "pred_static_meals": "normal model",
-                                       "pred_adaptive_meals": "adaptive model"})
-        band = alt.Chart(p).mark_area(opacity=0.2).encode(
-            x="date:T", y=alt.Y("lo_adaptive_meals:Q", title="meals"), y2="hi_adaptive_meals:Q")
-        lines = alt.Chart(long).mark_line(strokeWidth=1.5).encode(
-            x=alt.X("date:T", title="date"), y="meals:Q",
-            color=alt.Color("series:N", scale=alt.Scale(domain=["actual", "normal model", "adaptive model"],
-                                                        range=["black", "#4c78a8", "#f58518"])),
-            tooltip=["date:T", "series", "meals"])
-        alarms = [a for a in S["alarms"] if a["group"] == p.group.iloc[0]]
-        chart = band + lines
-        if alarms:
-            ad_dates = p[p.day_index.isin([a["day_index"] for a in alarms])][["date"]]
-            chart += alt.Chart(ad_dates).mark_rule(color="red", strokeDash=[4, 3]).encode(x="date:T")
-        st.altair_chart(chart.properties(height=380).interactive(), width="stretch")
-        st.caption("Shaded band = 90% safe range · red dashed lines = drift alarms (the model retrained itself)")
-        st.dataframe(p[["date", "y_meals", "pred_static_meals", "pred_adaptive_meals", "lo_adaptive_meals",
-                        "hi_adaptive_meals"]].rename(columns={
-                            "y_meals": "actual", "pred_static_meals": "normal model",
-                            "pred_adaptive_meals": "adaptive model", "lo_adaptive_meals": "safe range low",
-                            "hi_adaptive_meals": "safe range high"}),
-                     width="stretch", hide_index=True, height=250)
+st.subheader("How accurate is it?")
+st.write(f"We pretended it was **{pd.Timestamp(s['backtest_start']) - pd.Timedelta(days=1):%d %b %Y}**, "
+         "forecast the next 6 months, and compared the forecast with what really happened. Lower error is better.")
+w = s["backtest_wape"]
+c = st.columns(3)
+c[0].metric("Simple average", f"{w['naive']['overall']:.1%} error", "last 4 weeks, same weekday", delta_color="off")
+c[1].metric("Our model, one forecast", f"{w['one_shot']['overall']:.1%} error", "made once for 6 months",
+            delta_color="off")
+c[2].metric("Our model, updated monthly", f"{w['monthly']['overall']:.1%} error", "adapts to new data ✅",
+            delta_color="off")
+st.write("The one-time forecast could not know that behaviour would change in August. **Updated monthly**, "
+         "the drift detector notices the change and the model re-learns, so the error drops a lot. "
+         "That's why we recommend updating the forecast at the start of every month.")
+b = bt[bt.outlet == outlet].melt("date", ["actual", "one_shot", "monthly"], "series", "meals")
+b.series = b.series.map({"actual": "actual", "one_shot": "one forecast", "monthly": "updated monthly"})
+st.altair_chart(alt.Chart(b).mark_line(strokeWidth=1).encode(
+    x=alt.X("date:T", title=None), y=alt.Y("meals:Q", title="meals per day"),
+    color=alt.Color("series:N", title=None, scale=alt.Scale(
+        domain=["actual", "one forecast", "updated monthly"], range=["#333333", "#9ca3af", "#e4572e"])),
+    tooltip=["date:T", "series", "meals"]).properties(height=240, title=f"Backtest: {outlet}"), width="stretch")
+st.table(pd.DataFrame({t: [f"{w[k][t]:.1%}" for k in ["naive", "one_shot", "monthly"]] for t in config.GROUPS},
+                      index=["Simple average", "One forecast", "Updated monthly"]).rename(columns=str.capitalize))
 
-    with tab2:
-        rows = []
-        for g in config.GROUPS:
-            rows.append({"outlet type": g,
-                         "error normal": f"{st_['group_wape'][g]:.1%}", "error adaptive": f"{ad['group_wape'][g]:.1%}",
-                         "bias normal": f"{st_['group_bias'][g]:+.1%}", "bias adaptive": f"{ad['group_bias'][g]:+.1%}",
-                         "90% range coverage normal": f"{st_['coverage'][g]:.0%}",
-                         "90% range coverage adaptive": f"{ad['coverage'][g]:.0%}"})
-        st.write("**Fair calibration:** every outlet type should have a bias near 0% and a coverage near 90%.")
-        st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
-        w = st.columns(4)
-        w[0].metric("Waste, normal (meals)", f"{st_['waste_meals']:,.0f}")
-        w[1].metric("Waste, adaptive", f"{ad['waste_meals']:,.0f}")
-        w[2].metric("Shortage, normal (meals)", f"{st_['shortage_meals']:,.0f}")
-        w[3].metric("Shortage, adaptive", f"{ad['shortage_meals']:,.0f}")
-
-    with tab3:
-        ev = pd.DataFrame(S["evolution"])
-        st.write("**Evolution (NSGA-II):** best and average fitness of the population per generation.")
-        st.line_chart(ev.set_index("generation")[["best_fitness", "mean_pop_fitness"]], height=250)
-        st.dataframe(ev, width="stretch", hide_index=True)
-        tr = pd.read_csv(f"{folder}/training_log.csv")
-        st.write("**Final model training:** loss per epoch (it should go down smoothly, with no explosion).")
-        st.line_chart(tr.set_index("epoch")[["train_loss", "val_loss"]], height=250)
-        st.write("**Final population (Pareto trade-offs):**")
-        st.dataframe(pd.read_csv(f"{folder}/final_population.csv"), width="stretch", hide_index=True)
-
-    with tab4:
-        imp = pd.DataFrame({"feature": list(S["importance"]), "importance": list(S["importance"].values())})
-        st.write("How much the error grows when a feature is scrambled. Bigger = the model relies on it more.")
-        st.altair_chart(alt.Chart(imp).mark_bar().encode(
-            x=alt.X("importance:Q", title="error increase"), y=alt.Y("feature:N", sort="-x", title=None)),
-            width="stretch")
+st.divider()
+st.caption("Assumptions: weather = typical for the time of year; no special events unless listed in "
+           "config.FUTURE_EVENT_DATES; holidays and semester break from the calendar.")
+if st.button("↻ Re-run the forecast"):
+    with st.spinner("Re-running (about 2 minutes)..."):
+        F.run(log=lambda *_: None)
+    st.rerun()

@@ -48,8 +48,11 @@ def count_params(model):
 
 
 def train_model(X_tr, y_tr, X_va, y_va, hp, seed=config.SEED, max_epochs=config.MAX_EPOCHS,
-                patience=config.PATIENCE, init_model=None, lr=None):
-    """Train (or fine-tune, if init_model is given). Returns (model, history, diverged)."""
+                patience=config.PATIENCE, init_model=None, lr=None, sample_weight=None):
+    """Train (or fine-tune, if init_model is given). Returns (model, history, diverged).
+
+    sample_weight (optional): per-row importance, e.g. to make recent days count more.
+    """
     set_seed(seed)
     X_tr, y_tr = torch.tensor(X_tr), torch.tensor(y_tr, dtype=torch.float32)
     has_val = X_va is not None and len(X_va) > 0
@@ -60,6 +63,8 @@ def train_model(X_tr, y_tr, X_va, y_va, hp, seed=config.SEED, max_epochs=config.
         MLP(X_tr.shape[1], hp["n_layers"], hp["width"], hp["dropout"], hp["activation"])
     opt = torch.optim.AdamW(model.parameters(), lr=lr or hp["lr"], weight_decay=hp["weight_decay"])
     loss_fn = nn.HuberLoss(delta=hp["huber_delta"])
+    w = None if sample_weight is None else torch.tensor(sample_weight, dtype=torch.float32)
+    weighted_fn = nn.HuberLoss(delta=hp["huber_delta"], reduction="none")
     gen = torch.Generator().manual_seed(seed)
 
     history, best_state, best_val, bad = [], None, float("inf"), 0
@@ -70,7 +75,10 @@ def train_model(X_tr, y_tr, X_va, y_va, hp, seed=config.SEED, max_epochs=config.
         for i in range(0, len(X_tr), config.BATCH_SIZE):
             idx = perm[i:i + config.BATCH_SIZE]
             opt.zero_grad()
-            loss = loss_fn(model(X_tr[idx]), y_tr[idx])
+            if w is None:
+                loss = loss_fn(model(X_tr[idx]), y_tr[idx])
+            else:
+                loss = (weighted_fn(model(X_tr[idx]), y_tr[idx]) * w[idx]).mean()
             loss.backward()
             gn = torch.nn.utils.clip_grad_norm_(model.parameters(), config.GRAD_CLIP_NORM)
             max_gn = max(max_gn, float(gn))

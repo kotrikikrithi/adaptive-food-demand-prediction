@@ -126,3 +126,18 @@ FINETUNE_EPOCHS = 30
 FINETUNE_LR_MULT = 0.5         # fine-tune learning rate = best lr * 0.5
 CONFORMAL_LEVEL = 0.90         # prediction intervals should contain 90% of true values
 CONFORMAL_WINDOW = 60          # rolling window of recent errors per type, for the intervals
+
+# ---------------------------------------------------------------------------
+# 6-month forecast (src/forecast.py): train on ALL 2 years, predict the future
+# ---------------------------------------------------------------------------
+FORECAST_END = "2026-06-30"    # forecast every day from the day after our data ends until this date
+BACKTEST_START = "2025-07-01"  # honesty check: pretend it is 30 June 2025 and forecast Jul-Dec 2025
+RECENCY_HALF_LIFE_DAYS = 120   # a day 120 days old counts half as much as yesterday in training,
+                               # so the forecast follows the NEWEST customer behaviour
+FUTURE_EVENT_DATES = []        # planned special events, e.g. ["2026-02-14", "2026-03-20"]
+# Future weather is unknown, so we use the TYPICAL weather for that time of year
+# (average temperature for the date, and the chance of rain for the month).
+# Drift detector settings for scanning the 2-year HISTORY once (less sensitive than the daily
+# online detector, so the slow +5%/year growth is not mistaken for a behaviour change).
+CHANGE_SCAN_DELTA = 0.08
+CHANGE_SCAN_THRESHOLD = 1.5
