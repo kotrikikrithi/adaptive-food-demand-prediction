@@ -1,0 +1,2 @@
+attempt,note,final_fitness,accuracy_pct,mean_static_wape,mean_adaptive_wape,wape_std_across_scenarios,mean_fairness_gap,n_params,latency_ms,runtime_s,best_hp
+1,baseline,0.14549,90.42,0.13137,0.0958,0.01787,0.04867,449,0.0077,42.7,"{""n_layers"": 1, ""width"": 16, ""lr"": 0.00051, ""dropout"": 0.02, ""wd"": 0.00018, ""lags"": 2, ""huber"": 0.68, ""act"": ""relu""}"
