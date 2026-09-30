@@ -1,0 +1,5 @@
+numpy>=1.26
+pandas>=2.1
+matplotlib>=3.8
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.2

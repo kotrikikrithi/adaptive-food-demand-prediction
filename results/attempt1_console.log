@@ -1,0 +1,85 @@
+C:\Users\Varsha\adaptive-food-demand-prediction\src\model.py:78: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:821.)
+  total += float(loss) * len(idx)
+=== Attempt 1 | test drift: weekend_pattern_flip | population 10 x 6 generations ===
+Validation scenarios (out-of-distribution): ['none', 'level_shift', 'gradual_trend', 'weather_sensitivity_change']
+
+[Evolution] NSGA-II over network settings (lower is better for every objective)
+  gen  0 | evals  10 | front  8 | best fitness 0.1724 | pop mean 0.2414 | best val WAPE 0.0923 | min calib gap 0.0464 | best = {'n_layers': 1, 'width': 16, 'lr': 0.00055, 'dropout': 0.37, 'weight_decay': 0.00038, 'lag_set': 2, 'activation': 'gelu', 'huber_delta': 0.27}
+  gen  1 | evals  20 | front 10 | best fitness 0.1632 | pop mean 0.2914 | best val WAPE 0.0923 | min calib gap 0.0415 | best = {'n_layers': 1, 'width': 16, 'lr': 0.00071, 'dropout': 0.08, 'weight_decay': 0.00017, 'lag_set': 2, 'activation': 'relu', 'huber_delta': 0.45}
+  gen  2 | evals  30 | front 10 | best fitness 0.1591 | pop mean 0.2856 | best val WAPE 0.0923 | min calib gap 0.0370 | best = {'n_layers': 1, 'width': 16, 'lr': 0.00031, 'dropout': 0.07, 'weight_decay': 0.00019, 'lag_set': 1, 'activation': 'relu', 'huber_delta': 0.53}
+  gen  3 | evals  39 | front 10 | best fitness 0.1591 | pop mean 0.2911 | best val WAPE 0.0920 | min calib gap 0.0370 | best = {'n_layers': 1, 'width': 16, 'lr': 0.00031, 'dropout': 0.07, 'weight_decay': 0.00019, 'lag_set': 1, 'activation': 'relu', 'huber_delta': 0.53}
+  gen  4 | evals  48 | front 10 | best fitness 0.1591 | pop mean 0.3164 | best val WAPE 0.0920 | min calib gap 0.0233 | best = {'n_layers': 1, 'width': 16, 'lr': 0.00031, 'dropout': 0.07, 'weight_decay': 0.00019, 'lag_set': 1, 'activation': 'relu', 'huber_delta': 0.53}
+  gen  5 | evals  58 | front 10 | best fitness 0.1591 | pop mean 0.3155 | best val WAPE 0.0919 | min calib gap 0.0233 | best = {'n_layers': 1, 'width': 16, 'lr': 0.00031, 'dropout': 0.07, 'weight_decay': 0.00019, 'lag_set': 1, 'activation': 'relu', 'huber_delta': 0.53}
+  gen  6 | evals  67 | front 10 | best fitness 0.1591 | pop mean 0.3152 | best val WAPE 0.0919 | min calib gap 0.0233 | best = {'n_layers': 1, 'width': 16, 'lr': 0.00031, 'dropout': 0.07, 'weight_decay': 0.00019, 'lag_set': 1, 'activation': 'relu', 'huber_delta': 0.53}
+
+Chosen settings: {'n_layers': 1, 'width': 16, 'lr': 0.00031, 'dropout': 0.07, 'weight_decay': 0.00019, 'lag_set': 1, 'activation': 'relu', 'huber_delta': 0.53}  (validation fitness 0.1591)
+
+[Training] final model, loss per epoch:
+  epoch   1 | train 0.46552 | val 0.42923 | max grad norm (clipped to 1.0) 0.982
+  epoch   9 | train 0.02815 | val 0.02484 | max grad norm (clipped to 1.0) 0.237
+  epoch  17 | train 0.02208 | val 0.01613 | max grad norm (clipped to 1.0) 0.161
+  epoch  25 | train 0.02007 | val 0.01293 | max grad norm (clipped to 1.0) 0.141
+  epoch  33 | train 0.01806 | val 0.01192 | max grad norm (clipped to 1.0) 0.127
+  epoch  41 | train 0.01656 | val 0.01095 | max grad norm (clipped to 1.0) 0.146
+  epoch  49 | train 0.01610 | val 0.01053 | max grad norm (clipped to 1.0) 0.202
+  epoch  57 | train 0.01506 | val 0.00984 | max grad norm (clipped to 1.0) 0.181
+  epoch  65 | train 0.01484 | val 0.00981 | max grad norm (clipped to 1.0) 0.136
+  epoch  73 | train 0.01316 | val 0.00951 | max grad norm (clipped to 1.0) 0.152
+  epoch  80 | train 0.01255 | val 0.00874 | max grad norm (clipped to 1.0) 0.172
+
+[Test] forecasting 146 drifted days one at a time
+  drift alarm on day 586 for cafeteria
+  fine-tuned on days 545-586
+  drift alarm on day 588 for cafeteria
+  drift alarm on day 593 for cafeteria
+  fine-tuned on days 552-593
+  drift alarm on day 596 for cafeteria
+  drift alarm on day 598 for restaurant
+  fine-tuned on days 559-600
+  drift alarm on day 601 for cafeteria
+  drift alarm on day 607 for cafeteria
+  fine-tuned on days 566-607
+  drift alarm on day 613 for cafeteria
+  fine-tuned on days 573-614
+  drift alarm on day 618 for cafeteria
+  fine-tuned on days 580-621
+  fine-tuned on days 587-628
+  fine-tuned on days 594-635
+  fine-tuned on days 601-642
+  fine-tuned on days 608-649
+  drift alarm on day 659 for restaurant
+  fine-tuned on days 618-659
+  drift alarm on day 665 for cafeteria
+  fine-tuned on days 625-666
+  drift alarm on day 670 for cafeteria
+  fine-tuned on days 632-673
+  drift alarm on day 677 for cafeteria
+  fine-tuned on days 639-680
+  drift alarm on day 682 for hostel
+  drift alarm on day 684 for cafeteria
+  fine-tuned on days 646-687
+  fine-tuned on days 653-694
+  fine-tuned on days 660-701
+  fine-tuned on days 667-708
+  fine-tuned on days 674-715
+
+================ RESULTS ================
+Parameters: 321 (budget 5000) | latency 0.052 ms (budget 2.0 ms) | runtime 472s
+Drift alarms: [{'day_index': 586, 'group': 'cafeteria'}, {'day_index': 588, 'group': 'cafeteria'}, {'day_index': 593, 'group': 'cafeteria'}, {'day_index': 596, 'group': 'cafeteria'}, {'day_index': 598, 'group': 'restaurant'}, {'day_index': 601, 'group': 'cafeteria'}, {'day_index': 607, 'group': 'cafeteria'}, {'day_index': 613, 'group': 'cafeteria'}, {'day_index': 618, 'group': 'cafeteria'}, {'day_index': 659, 'group': 'restaurant'}, {'day_index': 665, 'group': 'cafeteria'}, {'day_index': 670, 'group': 'cafeteria'}, {'day_index': 677, 'group': 'cafeteria'}, {'day_index': 682, 'group': 'hostel'}, {'day_index': 684, 'group': 'cafeteria'}]
+Fine-tunes on days: [586, 593, 600, 607, 614, 621, 628, 635, 642, 649, 659, 666, 673, 680, 687, 694, 701, 708, 715]
+   static: WAPE 0.1382 | weekly std 0.0459 | bias gap 0.1174 | coverage {'restaurant': 0.88, 'cafeteria': 0.538, 'hostel': 0.887} | waste 15759 meals | shortage 28758 meals
+ adaptive: WAPE 0.1072 | weekly std 0.0513 | bias gap 0.0262 | coverage {'restaurant': 0.894, 'cafeteria': 0.89, 'hostel': 0.89} | waste 16200 meals | shortage 18645 meals
+Feature importance (WAPE increase when shuffled):
+  recent demand (lags)   +0.0973
+  holiday                +0.0152
+  outlet type            +0.0136
+  weather                +0.0068
+  rolling averages       +0.0064
+  special event          +0.0035
+  semester break         +0.0000
+  day of week            -0.0056
+  weekend flag           -0.0070
+
+FINAL FITNESS (lower is better): 0.1798
+Saved logs and plots to results/attempt_01/ and appended to results/attempts.csv

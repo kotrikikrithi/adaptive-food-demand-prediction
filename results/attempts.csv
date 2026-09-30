@@ -1,0 +1,2 @@
+attempt,timestamp,test_drift,note,quick,settings,n_params,latency_ms,val_fitness,test_wape_static,test_wape_adaptive,bias_gap_adaptive,coverage_gap_adaptive,final_fitness,runtime_s
+1,2026-09-30T13:28:05,weekend_pattern_flip,"baseline: NSGA-II search + adaptive layer, weekend_pattern_flip drift",False,"{""n_layers"": 1, ""width"": 16, ""lr"": 0.00031, ""dropout"": 0.07, ""weight_decay"": 0.00019, ""lag_set"": 1, ""activation"": ""relu"", ""huber_delta"": 0.53}",321,0.052,0.1591,0.1382,0.1072,0.0262,0.0034,0.1798,472.0

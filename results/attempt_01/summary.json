@@ -1,0 +1,266 @@
+{
+  "record": {
+    "attempt": 1,
+    "timestamp": "2026-09-30T13:28:05",
+    "test_drift": "weekend_pattern_flip",
+    "note": "baseline: NSGA-II search + adaptive layer, weekend_pattern_flip drift",
+    "quick": false,
+    "settings": "{\"n_layers\": 1, \"width\": 16, \"lr\": 0.00031, \"dropout\": 0.07, \"weight_decay\": 0.00019, \"lag_set\": 1, \"activation\": \"relu\", \"huber_delta\": 0.53}",
+    "n_params": 321,
+    "latency_ms": 0.052,
+    "val_fitness": 0.1591,
+    "test_wape_static": 0.1382,
+    "test_wape_adaptive": 0.1072,
+    "bias_gap_adaptive": 0.0262,
+    "coverage_gap_adaptive": 0.0034,
+    "final_fitness": 0.1798,
+    "runtime_s": 472.0
+  },
+  "config_hp": {
+    "n_layers": 1,
+    "width": 16,
+    "lr": 0.00031,
+    "dropout": 0.07,
+    "weight_decay": 0.00019,
+    "lag_set": 1,
+    "activation": "relu",
+    "huber_delta": 0.53
+  },
+  "summary": {
+    "static": {
+      "wape": 0.13821105669655556,
+      "rmse": 0.2599071263053206,
+      "weekly_wape_std": 0.045889653918546304,
+      "group_bias": {
+        "restaurant": 0.04287740956097834,
+        "cafeteria": -0.0744988172071236,
+        "hostel": -0.03772005668039398
+      },
+      "bias_gap": 0.11737622676810194,
+      "coverage": {
+        "restaurant": 0.8801369863013698,
+        "cafeteria": 0.5376712328767124,
+        "hostel": 0.886986301369863
+      },
+      "coverage_gap": 0.34931506849315064,
+      "waste_meals": 15758.839843793681,
+      "shortage_meals": 28757.76164842251,
+      "group_wape": {
+        "restaurant": 0.11558586329124598,
+        "cafeteria": 0.18466273745430073,
+        "hostel": 0.09500609733527056
+      }
+    },
+    "adaptive": {
+      "wape": 0.10721374262818889,
+      "rmse": 0.20385290399474135,
+      "weekly_wape_std": 0.051308699019610604,
+      "group_bias": {
+        "restaurant": 0.005845047923615738,
+        "cafeteria": -0.020369310075201163,
+        "hostel": -0.0011385786671367709
+      },
+      "bias_gap": 0.0262143579988169,
+      "coverage": {
+        "restaurant": 0.8938356164383562,
+        "cafeteria": 0.8904109589041096,
+        "hostel": 0.8904109589041096
+      },
+      "coverage_gap": 0.003424657534246589,
+      "waste_meals": 16199.527892935714,
+      "shortage_meals": 18644.794187593583,
+      "group_wape": {
+        "restaurant": 0.10725185393949128,
+        "cafeteria": 0.12683734807821456,
+        "hostel": 0.08169997588575903
+      }
+    }
+  },
+  "alarms": [
+    {
+      "day_index": 586,
+      "group": "cafeteria"
+    },
+    {
+      "day_index": 588,
+      "group": "cafeteria"
+    },
+    {
+      "day_index": 593,
+      "group": "cafeteria"
+    },
+    {
+      "day_index": 596,
+      "group": "cafeteria"
+    },
+    {
+      "day_index": 598,
+      "group": "restaurant"
+    },
+    {
+      "day_index": 601,
+      "group": "cafeteria"
+    },
+    {
+      "day_index": 607,
+      "group": "cafeteria"
+    },
+    {
+      "day_index": 613,
+      "group": "cafeteria"
+    },
+    {
+      "day_index": 618,
+      "group": "cafeteria"
+    },
+    {
+      "day_index": 659,
+      "group": "restaurant"
+    },
+    {
+      "day_index": 665,
+      "group": "cafeteria"
+    },
+    {
+      "day_index": 670,
+      "group": "cafeteria"
+    },
+    {
+      "day_index": 677,
+      "group": "cafeteria"
+    },
+    {
+      "day_index": 682,
+      "group": "hostel"
+    },
+    {
+      "day_index": 684,
+      "group": "cafeteria"
+    }
+  ],
+  "finetunes": [
+    586,
+    593,
+    600,
+    607,
+    614,
+    621,
+    628,
+    635,
+    642,
+    649,
+    659,
+    666,
+    673,
+    680,
+    687,
+    694,
+    701,
+    708,
+    715
+  ],
+  "importance": {
+    "recent demand (lags)": 0.09726848482056014,
+    "holiday": 0.015211742305896475,
+    "outlet type": 0.013607347884716486,
+    "weather": 0.006781380755610217,
+    "rolling averages": 0.006367350788085702,
+    "special event": 0.0034983393392187256,
+    "semester break": 0.0,
+    "day of week": -0.005550832570893616,
+    "weekend flag": -0.006961150939301469
+  },
+  "evolution": [
+    {
+      "generation": 0,
+      "evaluations": 10,
+      "pareto_front_size": 8,
+      "best_fitness": 0.17238117399742045,
+      "best_fitness_so_far": 0.17238117399742045,
+      "mean_pop_fitness": 0.24139089569872413,
+      "best_val_wape": 0.0922624775657091,
+      "min_variance": 0.012657272166314685,
+      "min_cost": 0.0466,
+      "min_calibration_gap": 0.046390931507576304,
+      "feasible": 9
+    },
+    {
+      "generation": 1,
+      "evaluations": 20,
+      "pareto_front_size": 10,
+      "best_fitness": 0.16324046007311482,
+      "best_fitness_so_far": 0.16324046007311482,
+      "mean_pop_fitness": 0.2913525611242811,
+      "best_val_wape": 0.0922624775657091,
+      "min_variance": 0.01146017115774206,
+      "min_cost": 0.0466,
+      "min_calibration_gap": 0.041515247187460975,
+      "feasible": 10
+    },
+    {
+      "generation": 2,
+      "evaluations": 30,
+      "pareto_front_size": 10,
+      "best_fitness": 0.15912495351983927,
+      "best_fitness_so_far": 0.15912495351983927,
+      "mean_pop_fitness": 0.28556039470299927,
+      "best_val_wape": 0.0922624775657091,
+      "min_variance": 0.01146017115774206,
+      "min_cost": 0.0466,
+      "min_calibration_gap": 0.037022019841569324,
+      "feasible": 10
+    },
+    {
+      "generation": 3,
+      "evaluations": 39,
+      "pareto_front_size": 10,
+      "best_fitness": 0.15912495351983927,
+      "best_fitness_so_far": 0.15912495351983927,
+      "mean_pop_fitness": 0.29113303365608506,
+      "best_val_wape": 0.09203517288758936,
+      "min_variance": 0.01146017115774206,
+      "min_cost": 0.0466,
+      "min_calibration_gap": 0.037022019841569324,
+      "feasible": 10
+    },
+    {
+      "generation": 4,
+      "evaluations": 48,
+      "pareto_front_size": 10,
+      "best_fitness": 0.15912495351983927,
+      "best_fitness_so_far": 0.15912495351983927,
+      "mean_pop_fitness": 0.3163817227158033,
+      "best_val_wape": 0.09203517288758936,
+      "min_variance": 0.01146017115774206,
+      "min_cost": 0.0466,
+      "min_calibration_gap": 0.023326966405615285,
+      "feasible": 10
+    },
+    {
+      "generation": 5,
+      "evaluations": 58,
+      "pareto_front_size": 10,
+      "best_fitness": 0.15912495351983927,
+      "best_fitness_so_far": 0.15912495351983927,
+      "mean_pop_fitness": 0.31549335866978145,
+      "best_val_wape": 0.09191966338093475,
+      "min_variance": 0.01146017115774206,
+      "min_cost": 0.0466,
+      "min_calibration_gap": 0.023326966405615285,
+      "feasible": 10
+    },
+    {
+      "generation": 6,
+      "evaluations": 67,
+      "pareto_front_size": 10,
+      "best_fitness": 0.15912495351983927,
+      "best_fitness_so_far": 0.15912495351983927,
+      "mean_pop_fitness": 0.3152021555312857,
+      "best_val_wape": 0.09191966338093475,
+      "min_variance": 0.01146017115774206,
+      "min_cost": 0.0466,
+      "min_calibration_gap": 0.023326966405615285,
+      "feasible": 10
+    }
+  ]
+}
