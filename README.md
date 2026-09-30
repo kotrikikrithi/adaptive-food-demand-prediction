@@ -55,7 +55,7 @@ with what really happened. Results go to `results/forecast/`.
 
 ## Website
 ```
-venvScriptsctivate
+venv\Scripts\activate
 streamlit run app.py
 ```
 Opens http://localhost:8501: one page with **1. The data**, **2. The model** and **3. The result**
