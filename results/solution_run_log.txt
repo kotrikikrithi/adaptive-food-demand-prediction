@@ -1,0 +1,41 @@
+PARAMETER CONFIGURATION: {"seed": 42, "n_days": 730, "train_end": 438, "val_end": 584, "early_stop_days": 60, "noise_std": 0.08, "trend_per_year": 0.05, "event_prob": 0.03, "val_strength": 0.5, "test_strength": 1.0, "max_epochs": 60, "patience": 8, "batch_size": 64, "grad_clip": 1.0, "pop_size": 12, "generations": 8, "crossover_prob": 0.9, "mutation_prob": 0.25, "mutation_sigma": 0.15, "param_budget": 3000, "latency_budget_ms": 1.0, "w_accuracy": 1.0, "w_variance": 1.0, "w_cost": 0.05, "w_fairness": 0.5, "bias_alpha": 0.15, "ph_delta": 0.02, "ph_threshold": 0.6, "adapt_days": 35, "finetune_every": 7, "finetune_window": 42, "finetune_epochs": 20, "finetune_lr_mult": 0.5, "conformal_level": 0.9, "conformal_window": 60}
+
+[1] NSGA-II evolution: population 12, 8 generations
+  gen  0 | evals  12 | best fitness 0.1715 | mean 0.2152 | best val WAPE 0.0957 | front 7
+  gen  1 | evals  24 | best fitness 0.1715 | mean 0.2023 | best val WAPE 0.0956 | front 12
+  gen  2 | evals  36 | best fitness 0.1709 | mean 0.1965 | best val WAPE 0.0926 | front 7
+  gen  3 | evals  48 | best fitness 0.1709 | mean 0.1936 | best val WAPE 0.0921 | front 12
+  gen  4 | evals  58 | best fitness 0.1709 | mean 0.1900 | best val WAPE 0.0921 | front 12
+  gen  5 | evals  70 | best fitness 0.1492 | mean 0.1837 | best val WAPE 0.0914 | front 12
+  gen  6 | evals  82 | best fitness 0.1492 | mean 0.1818 | best val WAPE 0.0914 | front 12
+  gen  7 | evals  94 | best fitness 0.1492 | mean 0.1767 | best val WAPE 0.0914 | front 12
+  gen  8 | evals 106 | best fitness 0.1492 | mean 0.1777 | best val WAPE 0.0914 | front 12
+  best settings: {'n_layers': 1, 'width': 16, 'lr': 0.00051, 'dropout': 0.02, 'wd': 0.00018, 'lags': 2, 'huber': 0.68, 'act': 'relu'}
+
+[2] Final training on all data before the test period
+  epoch   1 | train 0.11635 | val 0.09002 | grad norm 1.039 (clip 1.0)
+  epoch   8 | train 0.02402 | val 0.01743 | grad norm 0.180 (clip 1.0)
+  epoch  15 | train 0.01609 | val 0.01268 | grad norm 0.133 (clip 1.0)
+  epoch  22 | train 0.01177 | val 0.01077 | grad norm 0.145 (clip 1.0)
+  epoch  29 | train 0.01095 | val 0.00945 | grad norm 0.140 (clip 1.0)
+  epoch  36 | train 0.00973 | val 0.00912 | grad norm 0.181 (clip 1.0)
+  epoch  43 | train 0.00825 | val 0.00790 | grad norm 0.159 (clip 1.0)
+  epoch  50 | train 0.00779 | val 0.00818 | grad norm 0.161 (clip 1.0)
+  epoch  57 | train 0.00679 | val 0.00740 | grad norm 0.136 (clip 1.0)
+  epoch  60 | train 0.00707 | val 0.00740 | grad norm 0.111 (clip 1.0)
+
+[3] Drifted test on every scenario (static vs adaptive)
+
+  scenario                    static  adaptive  bias_gap  coverage(rest/caf/hos)  alarms
+  none                       0.0761  0.0761    0.0031    0.91/0.87/0.90          1
+  level_shift                0.1424  0.0818    0.0384    0.88/0.89/0.88          5
+  weekend_pattern_flip       0.2079  0.1225    0.0437    0.91/0.90/0.89          21
+  weather_sensitivity_change 0.1354  0.1158    0.0220    0.89/0.87/0.88          12
+  sudden_event_spike         0.1119  0.0974    0.0058    0.89/0.86/0.88          11
+  gradual_trend              0.1146  0.0811    0.0249    0.88/0.85/0.89          2
+
+  parameters 449 (budget 3000) | latency 0.009 ms (budget 1.0) | runtime 42.1s
+  mean WAPE static 0.1314 -> adaptive 0.0958 | std across scenarios 0.0179 | fairness gap 0.0487
+  ACCURACY (100 x (1 - adaptive WAPE)): 90.42%
+  FINAL FITNESS (lower is better): 0.1455
+  logged attempt 2 to results/solution_attempts.csv
