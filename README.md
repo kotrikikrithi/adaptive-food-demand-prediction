@@ -1,5 +1,7 @@
 # adaptive-food-demand-prediction
 
+**🌐 Live website:** https://adaptive-food-demand-prediction-nrjujmxm4hcrt5i3zvweg4.streamlit.app/
+
 Predicts daily meal demand for restaurants, cafeterias and hostels, and **keeps working when
 demand patterns change** (drift). The network's settings are found with a multi-objective
 evolutionary algorithm (NSGA-II). A drift detector plus online fine-tuning keeps the model
